@@ -6,6 +6,15 @@
 
 <img src="docs/screenshot.png" width="720" alt="Roco Kingdom 3D">
 
+## 下载体验
+
+无需编译。前往 [Releases](https://github.com/quitter0/roco-kingdom-homebrew/releases) 下载最新的 `roco-kingdom-homebrew-*-windows-x64.zip`：
+
+1. 解压到任意英文路径，保持 `roco-kingdom.exe` 与 `resources/` 位于同一目录
+2. 双击 `roco-kingdom.exe` 启动
+
+> 需要 Windows 10/11（64-bit）与支持 OpenGL 3.3 的显卡驱动。exe 未签名，首次运行可能触发 SmartScreen，选择"更多信息 → 仍要运行"即可。
+
 ## 功能特性
 
 - **程序化无限地形** — 4 层 value-noise 生成 512×512 网格，同一坐标永远生成相同地形与训练师。
@@ -32,11 +41,11 @@
 ## 目录结构
 
 ```
-roco-kingdom/
-├─ CMakeLists.txt        # 构建配置（C17、版本号、警告开关）
+roco-kingdom-homebrew/
+├─ CMakeLists.txt        # 构建配置（C17、版本号、警告开关、CPack）
 ├─ CMakePresets.json     # Debug / Release 构建预设
 ├─ .editorconfig         # 编辑器统一格式（UTF-8、LF、4 空格）
-├─ .github/workflows/    # GitHub Actions CI（MSYS2 MinGW64 构建）
+├─ .github/workflows/    # CI 构建 + tag 自动发布便携 ZIP
 ├─ src/                  # 源代码（按 core/world/render/battle/npc/ui/system 分模块）
 ├─ include/              # 头文件（含 pet_data.h 宠物数值表、raygui.h）
 ├─ resources/            # 模型 / 立绘 / 音频 / 字体
@@ -45,6 +54,7 @@ roco-kingdom/
 │  ├─ pictures/          # 宠物立绘 pet_pic_0.png ~ pet_pic_7.png
 │  └─ audio/ bgms/       # 音效与背景音乐
 ├─ tools/                # 资源工具（gen_audio.c / cjk_used.txt）
+├─ packaging/            # 便携包内附带的运行说明
 ├─ vendor/raylib/        # raylib 6.0 源码（vendored，仅保留构建所需部分）
 ├─ docs/                 # README 截图
 ├─ AGENTS.md             # 项目入口文档（约束 / 模块职责）
@@ -103,6 +113,14 @@ cd build/mingw-release
 
 `CMakeLists.txt` 中的 `file(COPY resources ...)` 只在 **configure** 阶段执行；新增或修改资源后需重新运行 `cmake`。
 
+维护者可生成本地便携包：
+
+```bash
+cmake --build --preset mingw-release --target package_portable
+```
+
+输出为 `build/mingw-release/roco-kingdom-homebrew-<version>-windows-x64.zip`。推送 `v*` tag 时，GitHub Actions 会自动构建并创建 Release。
+
 ## 操作说明
 
 | 按键 | 功能 |
@@ -122,7 +140,7 @@ cd build/mingw-release
 
 ## 存档
 
-存档写入运行目录下的 `resources/save.dat`（即 `build/resources/save.dat`），删除该文件即可重新开始。
+存档写入运行目录下的 `resources/save.dat`（源码构建时为 `build/mingw-release/resources/save.dat`，便携包为解压目录下的 `resources/save.dat`），删除该文件即可重新开始。
 
 ## 字体说明
 

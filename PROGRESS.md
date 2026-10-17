@@ -33,6 +33,7 @@
 - [x] GLB 资源压缩（gltfpack 量化 + 1024 贴图，174MB → 103MB）
 - [x] 非索引 GLB 路径应用节点变换（兼容 `KHR_mesh_quantization`）
 - [x] 工程规范补齐（`.editorconfig`、CMake 预设、第三方许可证、GitHub Actions CI、`-Wall -Wextra`）
+- [x] 便携版发布（CPack ZIP + tag 自动创建 GitHub Release）
 
 ---
 
