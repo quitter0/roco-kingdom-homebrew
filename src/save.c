@@ -88,7 +88,7 @@ static bool SanitizePet(Pet *p) {
     if (p->expToNext < 1) p->expToNext = p->level * p->level * 30;
 
     for (int m = 0; m < 4; m++) {
-        if (p->moveIds[m] < 0 || p->moveIds[m] >= (int)MOVE_COUNT) p->moveIds[m] = 0;
+        if (p->moveIds[m] < 0 || p->moveIds[m] >= (int)MOVE_COUNT) p->moveIds[m] = -1;
         if (p->skillPacks[m] < 0) p->skillPacks[m] = 0;
         if (p->skillPacks[m] > SKILLPACK_MAX) p->skillPacks[m] = SKILLPACK_MAX;
     }

@@ -89,8 +89,9 @@ void PauseBGM(AudioManager *am) {
 
 void ResumeBGM(AudioManager *am, BGMTrack track) {
     if (!am->audioEnabled) return;
-    // Stop the currently playing BGM (e.g., battle) before resuming
-    StopBGM(am);
+    // Stop a different track (e.g., battle) but keep the current one playing
+    // from its existing position; StopMusicStream rewinds to the start.
+    if (am->currentBGM != track) StopBGM(am);
     int idx = GetBgmIndex(track);
     if (idx >= 0 && idx < 3 && am->bgmLoaded[idx]) {
         Music *m = GetMusicForTrack(am, track);

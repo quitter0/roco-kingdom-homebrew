@@ -23,6 +23,7 @@ typedef struct {
     bool playerWon;
     bool playerRan;
     bool caught;
+    bool isTrainerBattle;  // trainer battles reject capture attempts
     bool needsRevive;   // all pets fainted, waiting for revive decision
     int selectedMove;
     char message[256];

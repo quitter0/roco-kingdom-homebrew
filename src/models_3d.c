@@ -324,22 +324,6 @@ void InitPetModels(void)
     memset(g_petModelsRot, 0, sizeof(g_petModelsRot));
     for (int i = 0; i < 10; i++)
         LoadOneGLB(i);
-    FILE *dbg = fopen("glb_debug.txt", "w");
-    if (dbg)
-    {
-        for (int s = 0; s < 8; s++)
-        {
-            if (g_petModelLoaded[s])
-            {
-                Mesh *m = &g_petModels[s].meshes[0];
-                fprintf(dbg, "sp%d %s: v=%d tri=%d scl=%.4f\n",
-                        s, PET_DATABASE[s].name, m->vertexCount, m->triangleCount, g_petModelScale[s]);
-            }
-            else
-                fprintf(dbg, "sp%d %s: no GLB\n", s, PET_DATABASE[s].name);
-        }
-        fclose(dbg);
-    }
 }
 
 void UnloadPetModels(void)
@@ -534,7 +518,6 @@ void DrawNPCModel(Vector3 pos, Color bodyColor, bool isTrainer, float scale,
     // Try GLB model if character type specified
     if (charType >= 0 && charType < CHAR_MODEL_COUNT && g_charModelLoaded[charType])
     {
-        float ms = scale * g_charModelScale[charType];
         Vector3 drawPos = {pos.x, pos.y, pos.z};
         DrawCharModelGLB(charType, drawPos, scale, facingAngle, WHITE);
         DrawCylinder((Vector3){pos.x, pos.y + 0.01f, pos.z}, 0.35f * scale, 0.35f * scale, 0.02f * scale, 16, (Color){0, 0, 0, 60});

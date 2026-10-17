@@ -126,7 +126,8 @@ void UpdatePlayer(Body *player, float cameraYaw, char sideway, char forward,
             nx /= nLen; nz /= nLen;
             float slopeDot = player->direction.x * nx + player->direction.z * nz;
             // Uphill slow / downhill boost (additive, clamped)
-            float boost = -slopeDot * maxSpd * 0.25f;
+            // slopeDot > 0 means moving downhill (height decreases along facing)
+            float boost = slopeDot * maxSpd * 0.25f;
             player->velocity.x += player->direction.x * boost * delta;
             player->velocity.z += player->direction.z * boost * delta;
             // Clamp to max speed after slope adjustment

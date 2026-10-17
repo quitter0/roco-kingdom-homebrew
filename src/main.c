@@ -293,12 +293,19 @@ int main(void) {
                 lookRotation.x -= mouseDelta.x * 0.001f;
                 lookRotation.y += mouseDelta.y * 0.001f;
                 camDist -= GetMouseWheelMove() * 1.5f;
+                if (camDist < 3.0f) camDist = 3.0f;
+                if (camDist > 20.0f) camDist = 20.0f;
             }
 
             char sideway = (char)(IsKeyDown(KEY_A) - IsKeyDown(KEY_D));
             char forward = (char)(IsKeyDown(KEY_W) - IsKeyDown(KEY_S));
             bool jump = IsKeyPressed(KEY_SPACE);
             bool sprint = IsKeyDown(KEY_LEFT_SHIFT);
+            if (showShop || showDialog) {
+                sideway = 0;
+                forward = 0;
+                jump = false;
+            }
             bool isMoving = (sideway != 0 || forward != 0);
 
             Vector3 prevPos = player.position;
@@ -566,6 +573,7 @@ int main(void) {
                                 } else if (npcs[i].isTrainer && !npcs[i].defeated) {
                                 Pet trainerPet = CreatePet(npcs[i].petSpeciesId, npcs[i].petLevel);
                                 InitBattle(&battle, playerTeam, teamSize, activePetIdx, &trainerPet);
+                                battle.isTrainerBattle = true;
                                 talkingToNPC = i;
                                 trainerBattle = false;
                                 gameState = STATE_BATTLE;
@@ -606,6 +614,7 @@ int main(void) {
                                 if (sqrtf(pdx * pdx + pdz * pdz) < 6.0f) {
                                     Pet trainerPet = CreatePet(speciesId, level);
                                     InitBattle(&battle, playerTeam, teamSize, activePetIdx, &trainerPet);
+                                    battle.isTrainerBattle = true;
                                     talkingToNPC = -1;
                                     trainerBattle = true;
                                     trainerCellX = cellX;
@@ -762,11 +771,6 @@ int main(void) {
                         {255, 220, 80, 255}, {200, 150, 255, 255},
                         {100, 255, 200, 255}, {255, 160, 100, 255}
                     };
-                    static const char *trainerDialogs[] = {
-                        "来战吧！", "我的宠物是最强的！",
-                        "让我看看你的实力！", "你赢不了我的！"
-                    };
-
                     int tcx = (int)floorf(camera.target.x / 6.0f);
                     int tcz = (int)floorf(camera.target.z / 6.0f);
                     int tRange = 8;
@@ -1097,11 +1101,11 @@ int main(void) {
                 DrawNPCDialogBox(npc->name, dtext);
                 // Page indicator
                 if (npc->dialogCount > 1) {
-                    char pageLabel[32];
+                    char pageLabel[64];
                     int total = npc->dialogCount + (npc->hasQuest ? 1 : 0);
                     snprintf(pageLabel, sizeof(pageLabel), "[%d/%d] 按E继续", dialogPage + 1, total);
-                    int sw2 = GetScreenWidth(), sh2 = GetScreenHeight();
-                    DrawTextEx(g_uiFont, pageLabel, (Vector2){(float)sw2 - 150, (float)sh2 - 30}, 14, 1, (Color){150, 150, 170, 255});
+                    int pageSw = GetScreenWidth(), pageSh = GetScreenHeight();
+                    DrawTextEx(g_uiFont, pageLabel, (Vector2){(float)pageSw - 150, (float)pageSh - 30}, 14, 1, (Color){150, 150, 170, 255});
                 }
             }
 
@@ -1201,7 +1205,7 @@ int main(void) {
             wasItemMenuOpen = showItemMenu;
 
             if (action < 0 && !showItemMenu && !showReviveSelect) {
-                action = UpdateBattleButtons(&battle, &inventory);
+                action = UpdateBattleButtons(&battle);
             }
 
             // ---- Revive selection UI ----
@@ -1322,7 +1326,7 @@ int main(void) {
                         Pet *activePet = &playerTeam[activePetIdx];
                         GainExp(activePet, battle.rewardExp);
                         inventory.gold += 30 + battle.enemyPet.level * 5;
-                        if (battle.caught && teamSize < 6) {
+                        if (battle.caught && teamSize < MAX_TEAM_SIZE) {
                             battle.enemyPet.currentHP = battle.enemyPet.maxHP;
                             HealPet(&battle.enemyPet);
                             playerTeam[teamSize] = battle.enemyPet;

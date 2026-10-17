@@ -92,9 +92,14 @@ void InitUI(void) {
     bool loaded = false;
     for (int i = 0; fontPaths[i]; i++) {
         if (FileExists(fontPaths[i])) {
-            g_uiFont = LoadFontEx(fontPaths[i], 32, cps, cpCount);
-            loaded = true;
-            break;
+            Font f = LoadFontEx(fontPaths[i], 32, cps, cpCount);
+            // raylib cannot load .ttc and returns the default font on failure
+            if (IsFontValid(f)) {
+                g_uiFont = f;
+                loaded = true;
+                break;
+            }
+            UnloadFont(f);
         }
     }
 
@@ -438,7 +443,7 @@ static Color TypeUIColor(PetType t) {
     }
 }
 
-int UpdateBattleButtons(BattleState *b, Inventory *inv) {
+int UpdateBattleButtons(BattleState *b) {
     if (!BattleIsPlayerTurn(b) || BattleIsOver(b)) return -1;
 
     int sw = GetScreenWidth();
@@ -743,7 +748,8 @@ void DrawBattleScene(const BattleState *b) {
                     float by = toPos.y + sinf(be)*br*0.7f;
                     float bz = toPos.z + sinf(ba)*cosf(be)*br;
                     float bLife = ip < 0.1f ? ip/0.1f : iDecay/0.9f;
-                    if(bLife > 1) bLife = 1; if(bLife < 0) bLife = 0;
+                    if (bLife > 1) bLife = 1;
+                    if (bLife < 0) bLife = 0;
                     unsigned char ba2 = (unsigned char)(230*bLife);
                     DrawSphere((Vector3){bx,by,bz}, 0.05f*bLife+0.02f, (Color){pCol.r,pCol.g,pCol.b,ba2});
                     if(i%3==0) DrawSphere((Vector3){bx*1.1f,by*1.05f,bz*1.1f}, 0.03f*bLife, (Color){pCol2.r,pCol2.g,pCol2.b,ba2});
@@ -922,7 +928,7 @@ void DrawPetBagScene(const Pet *team, int teamSize, int activeIdx) {
         return;
     }
 
-    int maxShow = teamSize < 6 ? teamSize : 6;
+    int maxShow = teamSize < MAX_TEAM_SIZE ? teamSize : MAX_TEAM_SIZE;
     for (int i = 0; i < maxShow; i++) {
         const Pet *p = &team[i];
         int y = 60 + i * 95;
@@ -1171,8 +1177,6 @@ void DrawBestiaryScene(void) {
             DrawRectangleLines(picX, picY, picW, picH, (Color){255, 220, 100, 120});
         }
 
-        int textW = picX - cx - 16; // Left text column width
-
         // Color swatch + name + type
         DrawRectangle(cx, cy, 28, 28, sp->color);
         DrawRectangleLines(cx, cy, 28, 28, WHITE);
@@ -1341,8 +1345,6 @@ void DrawBestiaryScene(void) {
                 DrawTextureEx(tex, (Vector2){(float)picX, (float)picY}, 0, (float)picW / tex.width, WHITE);
                 DrawRectangleLines(picX, picY, picW, picH, (Color){255, 220, 100, 120});
             }
-
-            int textW = picX - cx - 16;
 
             // Name + role
             char header[128];

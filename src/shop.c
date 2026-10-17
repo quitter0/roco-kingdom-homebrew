@@ -33,6 +33,7 @@ int MerchantPrice(int basePrice, float discount) {
 }
 
 void GenerateMerchant(MerchantShop *m, int speciesId, float cx, float cz) {
+    (void)speciesId;  // reserved for future species-specific stock
     m->centerX = cx;
     m->centerZ = cz;
 
@@ -73,8 +74,9 @@ bool ShopBuySkillPack(ShopItemType type, int price, Inventory *inv, Pet *pet) {
     }
 
     int moveId = RandomMoveForPet(pet->speciesId, pMin, pMax);
-    if (moveId < 0) return false; // no matching move in pet's pool
+    if (moveId < 0) return false; // no move available in pet's pool
+    if (!ApplySkillPack(pet, moveId, packCount)) return false; // no free slot
 
     inv->gold -= price;
-    return ApplySkillPack(pet, moveId, packCount);
+    return true;
 }

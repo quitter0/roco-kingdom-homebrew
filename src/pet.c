@@ -17,7 +17,10 @@ Pet CreatePet(int speciesId, int level) {
     pet.statusTimer = 0;
     pet.speedDown = false;
     pet.sharedPP = pet.maxSharedPP;
-    for (int i = 0; i < 4; i++) pet.skillPacks[i] = 0;
+    for (int i = 0; i < 4; i++) {
+        pet.moveIds[i] = -1;  // empty slot sentinel
+        pet.skillPacks[i] = 0;
+    }
 
     int moveCount = 0;
     for (int i = 0; i < 6 && moveCount < 4; i++) {
@@ -137,9 +140,10 @@ bool ApplySkillPack(Pet *pet, int moveId, int packCount) {
 // Pick a random move from the pet's learnable pool within power range
 int RandomMoveForPet(int speciesId, int powerMin, int powerMax) {
     const PetSpecies *sp = &PET_DATABASE[speciesId];
-    int candidates[8];
+    int candidates[6];
     int candCount = 0;
-    for (int i = 0; i < 8; i++) {
+    int strongest = -1;
+    for (int i = 0; i < 6; i++) {
         int mid = sp->learnableMoves[i];
         if (mid < 0) break;
         int pw = MOVE_DATABASE[mid].basePower;
@@ -150,7 +154,10 @@ int RandomMoveForPet(int speciesId, int powerMin, int powerMax) {
                 if (candidates[j] == mid) { dup = true; break; }
             if (!dup) candidates[candCount++] = mid;
         }
+        if (pw > 0 && (strongest < 0 || pw > MOVE_DATABASE[strongest].basePower))
+            strongest = mid;
     }
-    if (candCount == 0) return -1;
+    // No move in range: fall back to the pet's strongest damaging move
+    if (candCount == 0) return strongest;
     return candidates[rand() % candCount];
 }

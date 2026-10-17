@@ -12,7 +12,7 @@
 
 typedef struct {
     Vector3 playerPosition;
-    Pet team[6];
+    Pet team[MAX_TEAM_SIZE];
     int teamSize;
     int activePetIndex;
     Inventory inventory;

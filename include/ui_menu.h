@@ -24,7 +24,7 @@ void DrawMenu(void);
 void DrawWorldHUD(const Pet *team, int teamSize, int activeIdx, const Inventory *inv, float playerY, float stamina);
 
 // Battle UI - returns: -1=nothing, 0-3=move, 4=catch, 5=run, 6=potion
-int UpdateBattleButtons(BattleState *b, Inventory *inv);
+int UpdateBattleButtons(BattleState *b);
 void DrawBattleScene(const BattleState *b);
 
 // Pet Bag UI - returns: -1=nothing, 0-5=new active index

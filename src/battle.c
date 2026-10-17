@@ -25,17 +25,6 @@ static float TypeMultiplier(PetType atk, PetType def) {
     return 1.0f;
 }
 
-static const char *TypeName(PetType t) {
-    switch (t) {
-        case TYPE_FIRE:  return "火";
-        case TYPE_WATER: return "水";
-        case TYPE_GRASS: return "草";
-        case TYPE_LIGHT: return "光";
-        case TYPE_DARK:  return "暗";
-        default:         return "普通";
-    }
-}
-
 static const char *StatusName(int s) {
     switch (s) {
         case STATUS_BURN:   return "灼伤";
@@ -89,6 +78,38 @@ static void ApplyStatusTick(Pet *p, char *msgBuf, int bufSize) {
     }
 }
 
+// Apply start-of-turn status damage for both sides.
+// Returns false if the tick ended the battle (faint / win); caller must stop.
+static bool ApplyTurnStatusTicks(BattleState *b) {
+    Pet *playerPet = &b->playerTeam[b->activePetIdx];
+    Pet *enemyPet = &b->enemyPet;
+
+    if (b->message[0]) b->message[0] = '\0';
+    ApplyStatusTick(playerPet, b->message, sizeof(b->message));
+    ApplyStatusTick(enemyPet, b->message, sizeof(b->message));
+
+    if (playerPet->currentHP <= 0) {
+        playerPet->currentHP = 0;
+        bool allDead = true;
+        for (int i = 0; i < b->teamSize; i++)
+            if (!IsFainted(&b->playerTeam[i])) { allDead = false; break; }
+        if (allDead) b->needsRevive = true;
+        b->waitingForInput = true;
+        b->isPlayerTurn = true;
+        b->selectedMove = -1;
+        b->enemyActedFirst = false;
+        return false;
+    }
+    if (enemyPet->currentHP <= 0) {
+        enemyPet->currentHP = 0;
+        b->battleOver = true;
+        b->playerWon = true;
+        if (g_audio) PlaySFX(g_audio, SFX_WIN);
+        return false;
+    }
+    return true;
+}
+
 // ============ Effective speed (accounting for speed debuff) ============
 
 static int EffectiveSpeed(const Pet *p) {
@@ -121,6 +142,7 @@ void InitBattle(BattleState *b, Pet *team, int teamSize, int activeIdx, Pet *ene
     b->playerWon = false;
     b->playerRan = false;
     b->caught = false;
+    b->isTrainerBattle = false;
     b->needsRevive = false;
     b->selectedMove = -1;
     b->messageTimer = 0;
@@ -135,8 +157,6 @@ void InitBattle(BattleState *b, Pet *team, int teamSize, int activeIdx, Pet *ene
     b->enemyActedFirst = false;
 
     Pet *playerPet = &b->playerTeam[b->activePetIdx];
-    // Check priority first, then speed
-    bool playerPriority = false, enemyPriority = false;
     // No move selected yet, compare raw speed
     if (EffectiveSpeed(playerPet) >= EffectiveSpeed(&b->enemyPet)) {
         b->isPlayerTurn = true;
@@ -167,12 +187,35 @@ void BattleSelectMove(BattleState *b, int moveSlot) {
     if (playerPet->sharedPP < MOVE_DATABASE[mid].ppCost && playerPet->skillPacks[moveSlot] <= 0) return;
     b->selectedMove = moveSlot;
     b->waitingForInput = false;
+    b->animStartTime = 0.0;  // discard any stale animation from the previous turn
 }
 
 // ============ Catch / Run / Potion ============
 
+// A non-move action consumed the player's turn. If the enemy already attacked
+// first this turn, the turn ends; otherwise the enemy still gets to act.
+static void FinishPlayerAction(BattleState *b) {
+    if (b->enemyActedFirst) {
+        b->enemyActedFirst = false;
+        b->waitingForInput = true;
+        b->isPlayerTurn = true;
+        b->selectedMove = -1;
+    } else {
+        b->waitingForInput = false;
+    }
+}
+
 void BattleTryCatch(BattleState *b, Inventory *inv) {
     if (!b->waitingForInput || b->battleOver) return;
+
+    if (b->isTrainerBattle) {
+        snprintf(b->message, sizeof(b->message), "不能捕捉训练师的宠物！");
+        return;
+    }
+    if (b->teamSize >= MAX_TEAM_SIZE) {
+        snprintf(b->message, sizeof(b->message), "队伍已满，无法捕捉！");
+        return;
+    }
 
     int catchRate;
     if (UseGreatBall(inv)) catchRate = GetPetCatchRate(b->enemyPet.speciesId) + 25;
@@ -193,7 +236,7 @@ void BattleTryCatch(BattleState *b, Inventory *inv) {
         if (g_audio) PlaySFX(g_audio, SFX_CATCH);
     } else {
         snprintf(b->message, sizeof(b->message), "%s 挣脱了宠物球！", b->enemyPet.nickname);
-        b->waitingForInput = false;
+        FinishPlayerAction(b);
     }
 }
 
@@ -213,7 +256,7 @@ void BattleTryRun(BattleState *b) {
         if (g_audio) PlaySFX(g_audio, SFX_RUN);
     } else {
         snprintf(b->message, sizeof(b->message), "逃脱失败！");
-        b->waitingForInput = false;
+        FinishPlayerAction(b);
     }
 }
 
@@ -270,7 +313,7 @@ void BattleUseItem(BattleState *b, Inventory *inv, BattleItem item) {
             break;
         }
     }
-    b->waitingForInput = false;
+    FinishPlayerAction(b);
 }
 
 // ============ Turn check ============
@@ -281,8 +324,7 @@ bool BattleNeedsUpdate(BattleState *b) {
 
 // ============ Execute single attack (player or enemy) ============
 
-static void ExecuteAttack(Pet *attacker, Pet *defender, int moveSlot,
-                          bool isPlayer, BattleState *b) {
+static void ExecuteAttack(Pet *attacker, Pet *defender, int moveSlot, BattleState *b) {
     int moveId = attacker->moveIds[moveSlot];
     if (moveId < 0 || moveId >= (int)MOVE_COUNT) return;
     const MoveData *move = &MOVE_DATABASE[moveId];
@@ -343,7 +385,7 @@ static void ExecuteAttack(Pet *attacker, Pet *defender, int moveSlot,
         if ((rand() % 100) < move->statusChance) {
             defender->status = move->statusType;
             if (move->statusType == STATUS_FREEZE) defender->statusTimer = 3;
-            char stmp[48];
+            char stmp[96];
             snprintf(stmp, sizeof(stmp), " %s 陷入了%s状态！",
                      defender->nickname, StatusName(move->statusType));
             SafeMsgAppend(b->message, sizeof(b->message), stmp);
@@ -354,7 +396,7 @@ static void ExecuteAttack(Pet *attacker, Pet *defender, int moveSlot,
     if (move->statChance > 0 && move->statEffect == 1 && !defender->speedDown) {
         if ((rand() % 100) < move->statChance) {
             defender->speedDown = true;
-            char stmp[48];
+            char stmp[96];
             snprintf(stmp, sizeof(stmp), " %s 的速度降低了！", defender->nickname);
             SafeMsgAppend(b->message, sizeof(b->message), stmp);
         }
@@ -438,12 +480,14 @@ void BattleExecuteTurn(BattleState *b) {
             return;
         }
         // Turn fully complete — determine who goes first next turn
-        int nextEnemySlot = EnemyPickMove(b);
         bool enemyCanAct = (enemyPet->status != STATUS_FREEZE);
         if (enemyCanAct && EffectiveSpeed(enemyPet) > EffectiveSpeed(playerPet)) {
-            // Enemy goes first: auto-attack, then player responds
+            // Enemy goes first: this starts the new turn, so apply status ticks
+            // here (the player-first path ticks when the turn actually starts).
+            if (!ApplyTurnStatusTicks(b)) return;
             b->enemyActedFirst = true;
             b->animStartTime = GetTime();
+            int nextEnemySlot = EnemyPickMove(b);
             if (nextEnemySlot >= 0) {
                 int emId = enemyPet->moveIds[nextEnemySlot];
                 if (emId < 0 || emId >= (int)MOVE_COUNT) emId = 0;
@@ -452,7 +496,7 @@ void BattleExecuteTurn(BattleState *b) {
                 b->animInfo.isPlayerAttack = false;
                 b->animInfo.duration = MOVE_DATABASE[emId].basePower < 55 ? 1.0f :
                                        MOVE_DATABASE[emId].basePower < 80 ? 1.2f : 1.5f;
-                ExecuteAttack(enemyPet, playerPet, nextEnemySlot, false, b);
+                ExecuteAttack(enemyPet, playerPet, nextEnemySlot, b);
             } else {
                 int sd = enemyPet->level; if (sd < 1) sd = 1;
                 playerPet->currentHP -= sd;
@@ -463,7 +507,7 @@ void BattleExecuteTurn(BattleState *b) {
             }
             return;
         }
-        // Player goes first next turn
+        // Player goes first next turn; ticks run when that turn starts
         b->waitingForInput = true;
         b->isPlayerTurn = true;
         b->selectedMove = -1;
@@ -485,7 +529,7 @@ void BattleExecuteTurn(BattleState *b) {
                 b->animInfo.isPlayerAttack = false;
                 b->animInfo.duration = MOVE_DATABASE[emId].basePower < 55 ? 1.0f :
                                        MOVE_DATABASE[emId].basePower < 80 ? 1.2f : 1.5f;
-                ExecuteAttack(enemyPet, playerPet, b->enemySlot, false, b);
+                ExecuteAttack(enemyPet, playerPet, b->enemySlot, b);
             } else if (b->enemySlot < 0 && enemyPet->status != STATUS_FREEZE) {
                 int sd = enemyPet->level; if (sd < 1) sd = 1;
                 playerPet->currentHP -= sd;
@@ -509,7 +553,7 @@ void BattleExecuteTurn(BattleState *b) {
                 b->animInfo.isPlayerAttack = true;
                 b->animInfo.duration = MOVE_DATABASE[pmId].basePower < 55 ? 1.0f :
                                        MOVE_DATABASE[pmId].basePower < 80 ? 1.2f : 1.5f;
-                ExecuteAttack(playerPet, enemyPet, b->selectedMove, true, b);
+                ExecuteAttack(playerPet, enemyPet, b->selectedMove, b);
             } else if (playerPet->status == STATUS_FREEZE) {
                 b->animInfo.isPlayerAttack = true;
                 b->animInfo.duration = 0.4f;
@@ -550,6 +594,8 @@ void BattleExecuteTurn(BattleState *b) {
 
     if (b->enemyActedFirst) {
         if (b->selectedMove < 0) {
+            // Start of the turn — status ticks happen before the enemy attacks
+            if (!ApplyTurnStatusTicks(b)) return;
             // Enemy needs to attack first (player hasn't chosen yet)
             int enemySlot = EnemyPickMove(b);
             b->animStartTime = GetTime();
@@ -561,7 +607,7 @@ void BattleExecuteTurn(BattleState *b) {
                 b->animInfo.isPlayerAttack = false;
                 b->animInfo.duration = MOVE_DATABASE[emId].basePower < 55 ? 1.0f :
                                        MOVE_DATABASE[emId].basePower < 80 ? 1.2f : 1.5f;
-                ExecuteAttack(enemyPet, playerPet, enemySlot, false, b);
+                ExecuteAttack(enemyPet, playerPet, enemySlot, b);
             } else if (enemySlot < 0 && enemyPet->status != STATUS_FREEZE) {
                 int sd = enemyPet->level; if (sd < 1) sd = 1;
                 playerPet->currentHP -= sd;
@@ -604,7 +650,7 @@ void BattleExecuteTurn(BattleState *b) {
             b->animInfo.isPlayerAttack = true;
             b->animInfo.duration = MOVE_DATABASE[pmId].basePower < 55 ? 1.0f :
                                    MOVE_DATABASE[pmId].basePower < 80 ? 1.2f : 1.5f;
-            ExecuteAttack(playerPet, enemyPet, b->selectedMove, true, b);
+            ExecuteAttack(playerPet, enemyPet, b->selectedMove, b);
         } else if (b->selectedMove >= 0 && playerPet->status == STATUS_FREEZE) {
             b->animInfo.isPlayerAttack = true;
             b->animInfo.duration = 0.4f;
@@ -636,32 +682,11 @@ void BattleExecuteTurn(BattleState *b) {
         return;
     }
 
+    // --- Start-of-turn status ticks (may end the battle) ---
+    if (!ApplyTurnStatusTicks(b)) return;
+
     b->animStartTime = GetTime();
     b->playerActs = (b->selectedMove >= 0);
-
-    // --- Start-of-turn status ticks ---
-    if (b->message[0]) b->message[0] = '\0';
-    ApplyStatusTick(playerPet, b->message, sizeof(b->message));
-    ApplyStatusTick(enemyPet, b->message, sizeof(b->message));
-
-    // Check if status ticks caused a faint
-    if (playerPet->currentHP <= 0) {
-        playerPet->currentHP = 0;
-        bool allDead = true;
-        for (int i = 0; i < b->teamSize; i++)
-            if (!IsFainted(&b->playerTeam[i])) { allDead = false; break; }
-        if (allDead) { b->needsRevive = true; b->waitingForInput = true; return; }
-        b->waitingForInput = true;
-        b->isPlayerTurn = true;
-        return;
-    }
-    if (enemyPet->currentHP <= 0) {
-        enemyPet->currentHP = 0;
-        b->battleOver = true;
-        b->playerWon = true;
-        if (g_audio) PlaySFX(g_audio, SFX_WIN);
-        return;
-    }
 
     // --- Determine turn order ---
     int playerPrio = 0, enemyPrio = 0;
@@ -692,7 +717,7 @@ void BattleExecuteTurn(BattleState *b) {
             b->animInfo.isPlayerAttack = true;
             b->animInfo.duration = MOVE_DATABASE[pmId].basePower < 55 ? 1.0f :
                                    MOVE_DATABASE[pmId].basePower < 80 ? 1.2f : 1.5f;
-            ExecuteAttack(playerPet, enemyPet, b->selectedMove, true, b);
+            ExecuteAttack(playerPet, enemyPet, b->selectedMove, b);
         } else {
             b->animInfo.isPlayerAttack = true;
             b->animInfo.duration = 0.4f;
@@ -723,7 +748,7 @@ void BattleExecuteTurn(BattleState *b) {
             b->animInfo.isPlayerAttack = false;
             b->animInfo.duration = MOVE_DATABASE[emId].basePower < 55 ? 1.0f :
                                    MOVE_DATABASE[emId].basePower < 80 ? 1.2f : 1.5f;
-            ExecuteAttack(enemyPet, playerPet, b->enemySlot, false, b);
+            ExecuteAttack(enemyPet, playerPet, b->enemySlot, b);
         } else if (b->enemySlot < 0 && enemyPet->status != STATUS_FREEZE) {
             int sd = enemyPet->level; if (sd < 1) sd = 1;
             playerPet->currentHP -= sd;
@@ -785,4 +810,5 @@ void BattleSwitchPet(BattleState *b, int newIdx) {
     b->selectedMove = -1;
     b->isPlayerTurn = true;
     b->waitingForInput = true;
+    b->animStartTime = 0.0;  // don't let a finished animation swallow the next turn
 }

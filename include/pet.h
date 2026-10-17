@@ -4,6 +4,8 @@
 #include "pet_data.h"
 #include <stdbool.h>
 
+#define MAX_TEAM_SIZE 6
+
 typedef struct {
     int speciesId;
     char nickname[32];

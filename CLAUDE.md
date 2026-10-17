@@ -124,7 +124,7 @@ STATE_MENU → STATE_STARTER_SELECT → STATE_WORLD ↔ STATE_BATTLE
 
 - **严禁 `TextFormat`**——raylib 仅 4 个共用缓冲区。必须用 `snprintf(buf, sizeof(buf), ...)`
 - `MAX_NPCS=8`——不能超过，多余的零值槽位在原点 (0,0,0) 导致黑色 NPC 崩溃
-- **moveIds=0 是有效招式**（"撞击"）。未学习的槽 `movePPs=0`，不要依赖 `moveIds < 0` 判断空槽
+- **moveIds=0 是有效招式**（"撞击"）。未学习的槽用 `moveIds=-1` 哨兵，判断空槽一律用 `moveIds < 0`
 - 模型脚底在 y=0，调用方传入地面高度作为 `pos.y`
 - 朝向公式：模型 +Z 面朝世界 `(-sin(θ), cos(θ))`。要面朝方向 (dx,dz)，`θ = atan2f(-dx, dz)`
 - B 键切换背包：主循环顶部 `bJustPressed` 手动边缘检测，绕过 raygui 干扰

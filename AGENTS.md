@@ -38,7 +38,7 @@ cmake -G "MinGW Makefiles" .. && mingw32-make
 - **朝向公式**: `θ = atan2f(-dx, dz)`，模型 +Z 面朝世界 `(-sin(θ), cos(θ))`
 
 ### 战斗系统
-- **moveIds=0 是有效招式**（"撞击"），未学习槽 `movePPs=0`，不依赖 `< 0` 判断
+- **moveIds=0 是有效招式**（"撞击"），未学习槽用 `moveIds=-1` 哨兵，空槽判断一律用 `moveIds < 0`
 - **自动换宠在 `BattleNeedsUpdate` 块外执行** — 昏厥后 `waitingForInput=true` 导致返回 false
 - **战斗结束标志在 `STATE_BATTLE` 入口重置**，不在 battle-over 块内
 - **B 键切换背包**: 主循环顶部 `bJustPressed` 手动边缘检测，绕过 raygui 干扰
