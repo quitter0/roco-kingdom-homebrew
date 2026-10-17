@@ -1,5 +1,7 @@
 # 洛克王国 3D · Roco Kingdom 3D
 
+[![build](https://github.com/quitter0/roco-kingdom-homebrew/actions/workflows/build.yml/badge.svg)](https://github.com/quitter0/roco-kingdom-homebrew/actions/workflows/build.yml)
+
 一个用 **C (GNU17) + raylib 6.0** 从零实现的洛克王国风格 **3D 宠物收集回合制 RPG**。程序化无限地形、第三人称探索、8 种宠物 / 16 招式 / 6 属性、图鉴、任务、商店与存档系统。
 
 <img src="docs/screenshot.png" width="720" alt="Roco Kingdom 3D">
@@ -64,8 +66,8 @@ roco-kingdom/
 ### 克隆与构建
 
 ```bash
-git clone <仓库地址>
-cd roco-kingdom
+git clone https://github.com/quitter0/roco-kingdom-homebrew.git
+cd roco-kingdom-homebrew
 ```
 
 推荐使用 CMake 预设（输出到 `build/mingw-release/` 或 `build/mingw-debug/`）：
@@ -86,7 +88,7 @@ mingw32-make
 
 > raylib 源码已内置在 `vendor/raylib/`，无需联网初始化子模块。GitHub Actions 会在推送和 PR 时自动执行 configure + build（见 `.github/workflows/build.yml`）。
 
-> ⚠️ MinGW 的 `mingw32-make` 无法处理含非 ASCII 字符（如中文）的绝对路径，会报 `Illegal byte sequence`。请将仓库放在纯 ASCII 路径下构建（例如 `D:\roco-kingdom`），或先用目录联接（junction）映射到 ASCII 路径。
+> ⚠️ MinGW 的 `mingw32-make` 无法处理含非 ASCII 字符（如中文）的绝对路径，会报 `Illegal byte sequence`。请将仓库放在纯 ASCII 路径下构建（例如 `D:\roco-kingdom-homebrew`），或先用目录联接（junction）映射到 ASCII 路径。
 
 ### 运行
 
