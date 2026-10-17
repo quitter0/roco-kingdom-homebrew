@@ -8,6 +8,7 @@
 | --- | --- | --- | --- | --- |
 | [raylib](https://github.com/raysan5/raylib) | 6.0（上游 `a4680fc`） | zlib/libpng | Copyright (c) 2013-2026 Ramon Santamaria (@raysan5) | `vendor/raylib/` |
 | [raygui](https://github.com/raysan5/raygui) | 5.0-dev | zlib/libpng | Copyright (c) 2014-2026 Ramon Santamaria (@raysan5) | `include/raygui.h` |
+| [Noto Sans SC](https://fonts.google.com/noto/specimen/Noto+Sans+SC) | 游戏用字子集 | SIL OFL 1.1 | Copyright 2014-2021 Adobe, with Reserved Font Name 'Source' | `resources/fonts/roco-ui.ttf` |
 | [GLFW](https://www.glfw.org/) | raylib 内置 | zlib/libpng | Copyright (c) 2002-2006 Marcus Geelnard; 2006-2019 Camilla Löwy | `vendor/raylib/src/external/glfw/` |
 | [cgltf](https://github.com/jkuhlmann/cgltf) | raylib 内置 | MIT | Copyright (c) 2018-2021 Johannes Kuhlmann | `vendor/raylib/src/external/cgltf.h` |
 | [miniaudio](https://github.com/mackron/miniaudio) | raylib 内置 | Public domain / MIT-0 | Copyright (c) David Reid (mackron) | `vendor/raylib/src/external/miniaudio.h` |
@@ -18,6 +19,8 @@
 | 其他单头文件库 | raylib 内置 | Public domain / MIT / zlib | 见各文件头 | `vendor/raylib/src/external/` |
 
 "raylib 内置"表示随 raylib 源码一起分发，仅由 raylib 在对应平台按需编译；本项目不单独依赖这些组件。
+
+内置字体 `resources/fonts/roco-ui.ttf` 为 Noto Sans SC 的子集（ASCII/Latin-1 + 游戏用到的 483 个汉字及标点）。完整 OFL 1.1 许可证原文见 [`resources/fonts/OFL.txt`](resources/fonts/OFL.txt)。
 
 `vendor/raylib/src/external/` 中还包含 qoi、qoa、m3d、par_shapes、tinyobj_loader_c、sdefl/sinfl、jar_mod/jar_xm、rprand、rlsw、vox_loader 等单头文件库，均使用公有领域或 MIT/zlib 类宽松许可证，具体条款见各文件头。
 
@@ -60,6 +63,10 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FO
 DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
+
+## SIL Open Font License 1.1
+
+适用于内置 Noto Sans SC 游戏用字子集（`resources/fonts/roco-ui.ttf`）。许可证原文见 [`resources/fonts/OFL.txt`](resources/fonts/OFL.txt)。
 
 ## Public Domain / MIT-0
 

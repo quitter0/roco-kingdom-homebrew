@@ -51,7 +51,7 @@
 ## 特殊约束
 
 - `DrawTextEx` 非格式化函数 — `%` 直接写单 `%`，不用 `%%`（仅 `snprintf` 需要）
-- `simhei.ttf` 缺 `↔` 字形 — 用 `/` 替代
+- 字体优先加载内置 `resources/fonts/roco-ui.ttf`（Noto Sans SC，OFL），含 `↔` 等全部游戏用字；系统字体仅作回退
 - B 键切换背包：主循环顶部 `bJustPressed` 手动边缘检测，绕过 raygui 干扰
 - 严禁 `TextFormat` — raylib 仅 4 个共用缓冲区，会覆盖
 - `g_uiFont` 全局字体对象

@@ -25,11 +25,11 @@ static Texture2D g_bgTexture = {0};
 static bool g_bgLoaded = false;
 
 // All CJK characters used in game text (auto-extracted from src/ and include/)
-// 482 unique codepoints — 97% reduction from full CJK block (0x4E00-0x9FFF)
+// 483 unique codepoints — must stay in sync with resources/fonts/roco-ui.ttf
 static const int GAME_CJK[] = {
     0x4E00, 0x4E0A, 0x4E0D, 0x4E0E, 0x4E14, 0x4E1B, 0x4E2A, 0x4E2D, 0x4E3A, 0x4E45, 0x4E48, 0x4E4B,
     0x4E50, 0x4E5F, 0x4E60, 0x4E70, 0x4E86, 0x4E92, 0x4EA1, 0x4EA4, 0x4EAB, 0x4EBA, 0x4EC0, 0x4EE4,
-    0x4EE5, 0x4EEC, 0x4EF7, 0x4EFB, 0x4F11, 0x4F18, 0x4F19, 0x4F1A, 0x4F20, 0x4F24, 0x4F34, 0x4F3C,
+    0x4EE5, 0x4EEC, 0x4EF7, 0x4EFB, 0x4F0D, 0x4F11, 0x4F18, 0x4F19, 0x4F1A, 0x4F20, 0x4F24, 0x4F34, 0x4F3C,
     0x4F46, 0x4F4D, 0x4F4E, 0x4F4F, 0x4F53, 0x4F55, 0x4F59, 0x4F5C, 0x4F60, 0x4F7F, 0x4F9B, 0x4FDD,
     0x503C, 0x50CF, 0x5148, 0x5149, 0x514B, 0x514D, 0x5165, 0x5168, 0x516C, 0x5170, 0x5171, 0x5173,
     0x5177, 0x518D, 0x5192, 0x51B0, 0x51B2, 0x51B3, 0x51BB, 0x51CF, 0x51E0, 0x51FA, 0x51FB, 0x5200,
@@ -69,10 +69,10 @@ static const int GAME_CJK[] = {
     0x9760, 0x9762, 0x97F3, 0x9876, 0x987A, 0x989D, 0x98CE, 0x98D8, 0x98DE, 0x9996, 0x9A8C, 0x9AD8,
     0x9B54, 0x9ED1,
 };
-#define GAME_CJK_COUNT 482
+#define GAME_CJK_COUNT 483
 
 static int *BuildCJKCodepoints(int *outCount) {
-    // 256 ASCII + game-used CJK subset (482 chars) + extra symbols (12)
+    // 256 ASCII + game-used CJK subset (483 chars) + extra symbols (12)
     int capacity = 256 + GAME_CJK_COUNT + 16;
     int *cps = (int *)malloc(capacity * sizeof(int));
     if (!cps) { *outCount = 0; return NULL; }
@@ -90,7 +90,9 @@ void InitUI(void) {
     int cpCount;
     int *cps = BuildCJKCodepoints(&cpCount);
 
+    // Bundled OFL subset first so releases render identically on every machine.
     const char *fontPaths[] = {
+        "resources/fonts/roco-ui.ttf",
         "C:/Windows/Fonts/simhei.ttf",
         "C:/Windows/Fonts/msyh.ttc",
         "resources/simhei.ttf",

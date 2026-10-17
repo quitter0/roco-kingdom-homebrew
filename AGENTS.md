@@ -53,8 +53,8 @@ cmake --preset mingw-release && cmake --build --preset mingw-release
 
 ### 字体与文本
 - **`DrawTextEx` 非格式化函数** — `%` 直接写单 `%`，不用 `%%`（仅 `snprintf` 需要）
-- **`GAME_CJK[]` 仅 482 字符** — 新增中文需同步更新该数组
-- **simhei.ttf 缺 `↔` 字形** — 用 `/` 替代
+- **`GAME_CJK[]` 仅 483 字符** — 新增中文需同步更新该数组并重新生成 `resources/fonts/roco-ui.ttf` 子集
+- **内置字体优先** — `roco-ui.ttf` 为 Noto Sans SC 的 OFL 子集，系统字体仅作回退
 
 ### 资源加载
 - **GLB 加载用 `LoadModelSilent()`** — 包装 `SetTraceLogLevel(LOG_ERROR)` 抑制 u32→u16 警告
@@ -127,7 +127,8 @@ roco-kingdom/
 │   ├── characters/    # GLB 模型 + PNG 立绘
 │   ├── models/        # 宠物 GLB 模型
 │   ├── pictures/      # 宠物立绘
-│   └── *.png, *.ttf   # 背景图、字体
+│   ├── fonts/         # 内置中文 UI 字体子集 + OFL 许可证
+│   └── *.png          # 背景图
 ├── vendor/raylib/     # raylib 源码（静态库）
 └── build/             # CMake 输出（gitignore）
 ```

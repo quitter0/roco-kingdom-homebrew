@@ -55,7 +55,8 @@ roco-kingdom/
 │   ├── characters/    # GLB 模型 + PNG 立绘
 │   ├── models/        # 宠物 GLB 模型
 │   ├── pictures/      # 宠物立绘
-│   └── *.png, *.ttf   # 背景图、字体
+│   ├── fonts/         # 内置中文 UI 字体子集 + OFL 许可证
+│   └── *.png          # 背景图
 ├── vendor/raylib/     # raylib 源码（静态库）
 └── build/             # CMake 输出（gitignore）
 ```
@@ -140,11 +141,11 @@ STATE_MENU → STATE_STARTER_SELECT → STATE_WORLD ↔ STATE_BATTLE
 - **角色图片**：`resources/characters/*.png` 在图鉴 NPC 标签展示，文件名对应 `g_charModelFiles`
 - **DrawTextEx 非格式化函数**——字符串中的 `%` 直接写单 `%`，不要用 `%%`（仅 `snprintf` 格式串需要 `%%`）
 - **战斗技能卡片**：威力和标签（先手/高暴/回复）拼接成单行字符串，避免固定坐标重叠
-- **字体子集**：`GAME_CJK[]` 仅包含 482 个游戏实际使用的 CJK 字符（97% 减少），通过 Perl 脚本从源码提取。新增中文文本需同步更新该数组
+- **字体子集**：`GAME_CJK[]` 包含 483 个游戏实际使用的 CJK 字符，内置 `resources/fonts/roco-ui.ttf`（Noto Sans SC，OFL）覆盖全部用字并提供一致的跨机器渲染；系统字体仅作回退。新增中文文本需同步更新数组并重新生成字体子集
 - **GLB 模型加载**：使用 `LoadModelSilent()` 包装 `SetTraceLogLevel(LOG_ERROR)` 抑制 u32→u16 索引转换警告
 - **GLB 量化**：模型使用 `KHR_mesh_quantization`（整数位置 + 节点缩放），`LoadGLBNonIndexed` 已应用节点变换；禁止 meshopt/Draco/KTX2/WebP，gltfpack 必须用 `-vtf` 避免 `KHR_texture_transform`
 - **菜单背景**：`resources/background.png` 通过 `DrawFullscreenBG()` 在菜单/图鉴/初始选择/游戏结束界面全屏显示，叠加暗色遮罩保证文字可读
-- **simhei.ttf 缺少 ↔ (U+2194) 字形**——使用 `/` 替代
+- **内置字体覆盖 ↔ (U+2194)**——`resources/fonts/roco-ui.ttf` 含全部游戏用字；仅系统字体回退时不保证该字形
 
 ## Harness 文档结构
 

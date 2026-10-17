@@ -25,7 +25,7 @@
 - **NPC 与任务** — 8 名固定 NPC（训练师 / 护士 / 行商 / 研究员 / 老人），多页对话树、赠礼与循环任务。
 - **世界玩法** — 野生精灵游荡与随机遇敌、商店购买、魔法泉水免费恢复、复活令牌。
 - **3D 模型** — GLB 角色与宠物模型，加载失败时自动回退到程序化几何体。
-- **系统** — 版本化存档、BGM + 音效、中文 UI（字体子集优化）。
+- **系统** — 版本化存档、BGM + 音效、中文 UI（内置 Noto Sans SC 字体子集）。
 
 ## 技术栈
 
@@ -52,6 +52,7 @@ roco-kingdom-homebrew/
 │  ├─ characters/        # 角色 GLB 模型 + PNG 立绘
 │  ├─ models/            # 宠物 GLB 模型
 │  ├─ pictures/          # 宠物立绘 pet_pic_0.png ~ pet_pic_7.png
+│  ├─ fonts/             # 内置中文 UI 字体子集 + OFL 许可证
 │  └─ audio/ bgms/       # 音效与背景音乐
 ├─ tools/                # 资源工具（gen_audio.c / cjk_used.txt）
 ├─ packaging/            # 便携包内附带的运行说明
@@ -144,7 +145,7 @@ cmake --build --preset mingw-release --target package_portable
 
 ## 字体说明
 
-游戏优先加载 `C:/Windows/Fonts/simhei.ttf`，其次加载 `resources/simhei.ttf`。若两者都不存在，会回退到 raylib 默认字体（无法显示中文）。在其他机器或系统上运行，可将任意支持中文的 `.ttf` 命名为 `resources/simhei.ttf` 放入资源目录。
+游戏内置 `resources/fonts/roco-ui.ttf`（Noto Sans SC 的游戏用字子集，SIL OFL 1.1），无需安装系统字体即可显示中文。若该文件缺失，会依次回退到系统黑体等字体，最后回退到 raylib 默认字体（无法显示中文）。字体许可证原文见 `resources/fonts/OFL.txt`。
 
 ## 文档
 
