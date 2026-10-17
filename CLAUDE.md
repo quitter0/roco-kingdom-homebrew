@@ -36,6 +36,8 @@ mingw32-make
 ./roco-kingdom.exe
 ```
 
+或使用预设：`cmake --preset mingw-release && cmake --build --preset mingw-release`（在 `build/mingw-release/` 运行）。
+
 必须在 `build/` 目录下运行，程序以当前工作目录加载 `resources/`。
 
 ## 项目结构

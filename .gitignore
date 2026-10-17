@@ -23,6 +23,9 @@ CPackSourceConfig.cmake
 # Runtime save data
 resources/save.dat
 
+# Debug dump written by the GLB loader
+glb_debug.txt
+
 # IDE / editor
 .vscode/
 .idea/

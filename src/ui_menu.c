@@ -1,7 +1,15 @@
 #include "ui_menu.h"
 #include "pet_data.h"
+// raygui's implementation does not annotate unused parameters; keep -Wextra noise out.
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 #include "models_3d.h"
 #include "terrain.h"
 #include <stdio.h>

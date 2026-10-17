@@ -18,6 +18,12 @@ cmake -G "MinGW Makefiles" .. && mingw32-make
 ./roco-kingdom.exe
 ```
 
+或使用 CMake 预设（输出到 `build/mingw-release/` / `build/mingw-debug/`）：
+
+```bash
+cmake --preset mingw-release && cmake --build --preset mingw-release
+```
+
 必须在 `build/` 目录运行（程序以 CWD 加载 `resources/`）。
 修改 `CMakeLists.txt` 的源文件列表后必须重新运行 cmake。
 

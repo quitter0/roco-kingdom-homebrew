@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.25)
-project(roco-kingdom C)
+project(roco-kingdom VERSION 1.0.0 LANGUAGES C)
+
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+# Keep the gnu17 dialect (C17 + GNU extensions) used by the project
+set(CMAKE_C_EXTENSIONS ON)
 
 add_subdirectory(vendor/raylib)
 
@@ -26,5 +31,9 @@ add_executable(roco-kingdom
 
 target_include_directories(roco-kingdom PRIVATE include vendor/raylib/src/external)
 target_link_libraries(roco-kingdom raylib)
+
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(roco-kingdom PRIVATE -Wall -Wextra)
+endif()
 
 file(COPY resources DESTINATION ${CMAKE_BINARY_DIR})

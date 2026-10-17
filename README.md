@@ -23,16 +23,20 @@
 | 语言 | C (GNU17)，单线程主循环 |
 | 引擎 | [raylib 6.0](https://github.com/raysan5/raylib)（源码内置，上游 commit `a4680fc`） |
 | UI | [raygui](https://github.com/raysan5/raygui)（单头文件，已内置于 `include/`） |
-| 构建 | CMake ≥ 3.25 + MinGW-w64 |
+| 构建 | CMake ≥ 3.25 + MinGW-w64（`-Wall -Wextra`） |
+| CI | GitHub Actions（Windows + MSYS2 MinGW64） |
 | 平台 | Windows（1280×720，60 FPS，窗口可调整） |
 
 ## 目录结构
 
 ```
 roco-kingdom/
-├─ CMakeLists.txt        # 构建配置
+├─ CMakeLists.txt        # 构建配置（C17、版本号、警告开关）
+├─ CMakePresets.json     # Debug / Release 构建预设
+├─ .editorconfig         # 编辑器统一格式（UTF-8、LF、4 空格）
+├─ .github/workflows/    # GitHub Actions CI（MSYS2 MinGW64 构建）
 ├─ src/                  # 源代码（按 core/world/render/battle/npc/ui/system 分模块）
-├─ include/              # 头文件（含 pet_data.h 宠物数值表）
+├─ include/              # 头文件（含 pet_data.h 宠物数值表、raygui.h）
 ├─ resources/            # 模型 / 立绘 / 音频 / 字体
 │  ├─ characters/        # 角色 GLB 模型 + PNG 立绘
 │  ├─ models/            # 宠物 GLB 模型
@@ -40,10 +44,13 @@ roco-kingdom/
 │  └─ audio/ bgms/       # 音效与背景音乐
 ├─ tools/                # 资源工具（gen_audio.c / cjk_used.txt）
 ├─ vendor/raylib/        # raylib 6.0 源码（vendored，仅保留构建所需部分）
+├─ docs/                 # README 截图
 ├─ AGENTS.md             # 项目入口文档（约束 / 模块职责）
 ├─ CLAUDE.md             # AI 协作操作规范
 ├─ BESTIARY.md           # 游戏设计文档（宠物 / 招式 / 机制）
-└─ PROGRESS.md           # 开发进度
+├─ PROGRESS.md           # 开发进度
+├─ THIRD_PARTY_NOTICES.md # 第三方组件与许可证
+└─ LICENSE               # MIT
 ```
 
 ## 快速开始
@@ -59,22 +66,37 @@ roco-kingdom/
 ```bash
 git clone <仓库地址>
 cd roco-kingdom
+```
 
+推荐使用 CMake 预设（输出到 `build/mingw-release/` 或 `build/mingw-debug/`）：
+
+```bash
+cmake --preset mingw-release
+cmake --build --preset mingw-release
+```
+
+也可以手动构建：
+
+```bash
 mkdir build
 cd build
-cmake -G "MinGW Makefiles" ..
+cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release ..
 mingw32-make
 ```
 
-> raylib 源码已内置在 `vendor/raylib/`，无需联网初始化子模块。
+> raylib 源码已内置在 `vendor/raylib/`，无需联网初始化子模块。GitHub Actions 会在推送和 PR 时自动执行 configure + build（见 `.github/workflows/build.yml`）。
 
 > ⚠️ MinGW 的 `mingw32-make` 无法处理含非 ASCII 字符（如中文）的绝对路径，会报 `Illegal byte sequence`。请将仓库放在纯 ASCII 路径下构建（例如 `D:\roco-kingdom`），或先用目录联接（junction）映射到 ASCII 路径。
 
 ### 运行
 
 ```bash
-# 必须在 build/ 目录下运行（程序以当前工作目录加载 resources/）
+# 预设构建：在 build/mingw-release/ 下运行
+cd build/mingw-release
 ./roco-kingdom.exe
+
+# 手动构建：在 build/ 下运行
+# 程序以当前工作目录加载 resources/
 ```
 
 `CMakeLists.txt` 中的 `file(COPY resources ...)` 只在 **configure** 阶段执行；新增或修改资源后需重新运行 `cmake`。
@@ -110,11 +132,12 @@ mingw32-make
 - [`CLAUDE.md`](CLAUDE.md) — AI 协作规范与编码约定
 - [`BESTIARY.md`](BESTIARY.md) — 宠物、招式与战斗机制设计
 - [`PROGRESS.md`](PROGRESS.md) — 已完成功能与后续计划
+- [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) — 第三方组件、版权与许可证原文
 - `src/*/ARCHITECTURE.md` — 各模块架构说明
 
 ## 许可与致谢
 
-本项目以 [MIT License](LICENSE) 发布。
+本项目以 [MIT License](LICENSE) 发布。内置第三方组件的许可证与版权声明见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
 
 - [raylib](https://github.com/raysan5/raylib) — zlib License
 - [raygui](https://github.com/raysan5/raygui) — zlib License
