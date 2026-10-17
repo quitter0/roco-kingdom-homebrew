@@ -53,8 +53,7 @@ roco-kingdom/
 │   ├── characters/    # GLB 模型 + PNG 立绘
 │   ├── models/        # 宠物 GLB 模型
 │   ├── pictures/      # 宠物立绘
-│   ├── shaders/       # GLSL 着色器
-│   ── *.png, *.ttf   # 背景图、字体
+│   └── *.png, *.ttf   # 背景图、字体
 ├── vendor/raylib/     # raylib 源码（静态库）
 └── build/             # CMake 输出（gitignore）
 ```

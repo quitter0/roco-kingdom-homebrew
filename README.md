@@ -33,13 +33,12 @@ roco-kingdom/
 ├─ CMakeLists.txt        # 构建配置
 ├─ src/                  # 源代码（按 core/world/render/battle/npc/ui/system 分模块）
 ├─ include/              # 头文件（含 pet_data.h 宠物数值表）
-├─ resources/            # 模型 / 立绘 / 音频 / 字体 / 着色器
+├─ resources/            # 模型 / 立绘 / 音频 / 字体
 │  ├─ characters/        # 角色 GLB 模型 + PNG 立绘
 │  ├─ models/            # 宠物 GLB 模型
 │  ├─ pictures/          # 宠物立绘 pet_pic_0.png ~ pet_pic_7.png
-│  ├─ audio/ bgms/       # 音效与背景音乐
-│  └─ shaders/           # GLSL 着色器
-├─ tools/                # 资源生成工具（gen_audio.c / generate_models.c）
+│  └─ audio/ bgms/       # 音效与背景音乐
+├─ tools/                # 资源工具（gen_audio.c / cjk_used.txt）
 ├─ vendor/raylib/        # raylib 6.0 源码（vendored，仅保留构建所需部分）
 ├─ AGENTS.md             # 项目入口文档（约束 / 模块职责）
 ├─ CLAUDE.md             # AI 协作操作规范

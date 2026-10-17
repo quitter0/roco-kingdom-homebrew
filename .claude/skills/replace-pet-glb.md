@@ -37,7 +37,7 @@ static int glbToSpecies[10] = {0, 2, 1, 4, -1, -1, 5, 7, 3, 6};
 //                                 pet_1 → species 2 (喵喵)
 //                                      pet_2 → species 1 (水蓝蓝)
 //                                           pet_3 → species 4 (格兰花)
-//                                                pet_4,5 → unused
+//                                                pet_4,5 → unused slots
 //                                                      pet_6 → species 5 (雪精灵)
 //                                                           pet_7 → species 7 (幽灵)
 //                                                                pet_8 → species 3 (瞌睡王)
@@ -58,7 +58,7 @@ That's it. No code changes needed beyond the mapping array — `InitPetModels()`
 |----------|------|---------|
 | `InitPetModels()` | `src/models_3d.c` | Load all GLBs, fix indices, compute scale, create rotated copies |
 | `LoadOneGLB(glbIdx)` | `src/models_3d.c` | Load single GLB + create rotated copy |
-| `CloneMeshRotated(src)` | `src/models_3d.c` | Deep-clone mesh with 180° Y rotation on vertices+normals |
+| `CloneMeshRotatedY(src, angle)` | `src/models_3d.c` | Deep-clone mesh rotated around Y on vertices+normals |
 | `LoadGLBNonIndexed(path)` | `src/models_3d.c` | Reload GLB via cgltf, expand to non-indexed (fixes 16-bit overflow) |
 
 ## Current model state
@@ -73,12 +73,8 @@ That's it. No code changes needed beyond the mapping array — `InitPetModels()`
 | pet_7.glb | 7 | 幽灵 | loaded |
 | pet_8.glb | 3 | 瞌睡王 | loaded |
 | pet_9.glb | 6 | 小包子 | loaded |
-| pet_4.glb | - | unused | loaded (ignored) |
-| pet_5.glb | - | unused | loaded (ignored) |
 
-## Debug
-
-After running the game, check `build/glb_debug.txt` for per-species load status, vertex counts, and computed scales.
+GLB indices 4 and 5 are unused slots in `glbToSpecies`; no files exist for them.
 
 ## Rollback
 
