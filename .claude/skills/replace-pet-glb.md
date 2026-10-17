@@ -1,6 +1,6 @@
 ---
 name: replace-pet-glb
-description: Replace procedural pet model with GLB file (vertex pre-rotation, auto-scale, 16-bit index fix)
+description: Replace procedural pet model with GLB file (quantization-aware, vertex pre-rotation, auto-scale, 16-bit index fix)
 metadata:
   type: reference
 ---
@@ -12,10 +12,25 @@ Fully automated pipeline: load GLB → fix 16-bit index overflow → auto-scale 
 ## How it works
 
 1. **Load**: `LoadModel("resources/models/pet_N.glb")` via raylib's cgltf backend
-2. **Fix 16-bit indices**: If vertexCount > 65535, rebuild as non-indexed mesh via `LoadGLBNonIndexed()`
+2. **Fix 16-bit indices**: If vertexCount > 65535, rebuild as non-indexed mesh via `LoadGLBNonIndexed()` (also applies the glTF node transform, required for quantized models)
 3. **Auto-scale**: `scale = 1.5 / max(boundingBox.width, height, depth)`, clamped to [0.01, 1.5]
 4. **Pre-rotate**: Deep-clone mesh, negate all vertex X/Z and normal X/Z (180° Y rotation). Enemy uses default model, player pet uses rotated copy.
 5. **Render**: Simple `DrawModel(model, drawPos, scale, WHITE)` — no runtime rotation needed.
+
+## Compression pipeline (current assets)
+
+All 13 GLBs (8 pets + 5 characters) are compressed with gltfpack + gltf-transform:
+
+```bash
+npx gltfpack -i model.glb -o model.opt.glb -vtf
+npx @gltf-transform/cli resize --width 1024 --height 1024 model.opt.glb model.glb
+```
+
+- `-vtf` keeps UVs as float. Without it gltfpack quantizes UVs and emits `KHR_texture_transform`, which raylib does not support (textures stretch/tile incorrectly).
+- Never use `-c/-cc` (meshopt), `-tc/-tu` (KTX2), `-tw` (WebP), Draco, WebP or KTX2 — raylib has no decoder for any of them.
+- Output uses `KHR_mesh_quantization`: positions are integers plus node translation/scale. `LoadGLBNonIndexed` applies that transform; keep the logic if you edit the loader.
+- Textures are resized to 1024 JPEG. Keep textures as PNG/JPEG.
+- Result: 174MB → 103MB. Verify each model in-game (bounds, scale, facing, textures).
 
 ## Adding a new model
 

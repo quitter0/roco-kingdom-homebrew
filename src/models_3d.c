@@ -34,6 +34,28 @@ static Mesh LoadGLBNonIndexed(const char *fileName)
     // Count total triangles across all primitives in the first mesh
     int totalTris = 0;
     cgltf_mesh *gltfMesh = &data->meshes[0];
+
+    // Quantized glTF (KHR_mesh_quantization) stores positions in integer space
+    // and restores the original scale/offset through the node transform. This
+    // path bypasses raylib's glTF loader, so apply that transform manually.
+    Matrix world = {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+    for (cgltf_size n = 0; n < data->nodes_count; n++) {
+        if (data->nodes[n].mesh != gltfMesh) continue;
+        cgltf_float wt[16];
+        cgltf_node_transform_world(&data->nodes[n], wt);
+        world = (Matrix){
+            wt[0], wt[4], wt[8], wt[12],
+            wt[1], wt[5], wt[9], wt[13],
+            wt[2], wt[6], wt[10], wt[14],
+            wt[3], wt[7], wt[11], wt[15]
+        };
+        break;
+    }
     for (cgltf_size p = 0; p < gltfMesh->primitives_count; p++)
     {
         cgltf_primitive *prim = &gltfMesh->primitives[p];
@@ -80,6 +102,31 @@ static Mesh LoadGLBNonIndexed(const char *fileName)
             cgltf_accessor_unpack_floats(nrmAcc, nrmBuf, nrmAcc->count * 3);
         if (uvAcc)
             cgltf_accessor_unpack_floats(uvAcc, uvBuf, uvAcc->count * 2);
+
+        for (cgltf_size v = 0; v < posAcc->count; v++)
+        {
+            Vector3 p = { posBuf[v*3], posBuf[v*3 + 1], posBuf[v*3 + 2] };
+            p = Vector3Transform(p, world);
+            posBuf[v*3] = p.x;
+            posBuf[v*3 + 1] = p.y;
+            posBuf[v*3 + 2] = p.z;
+        }
+        if (nrmAcc)
+        {
+            for (cgltf_size v = 0; v < nrmAcc->count; v++)
+            {
+                Vector3 n = { nrmBuf[v*3], nrmBuf[v*3 + 1], nrmBuf[v*3 + 2] };
+                Vector3 tn = {
+                    n.x*world.m0 + n.y*world.m4 + n.z*world.m8,
+                    n.x*world.m1 + n.y*world.m5 + n.z*world.m9,
+                    n.x*world.m2 + n.y*world.m6 + n.z*world.m10
+                };
+                tn = Vector3Normalize(tn);
+                nrmBuf[v*3] = tn.x;
+                nrmBuf[v*3 + 1] = tn.y;
+                nrmBuf[v*3 + 2] = tn.z;
+            }
+        }
 
         // Read indices as uint32 (cgltf always unpacks to uint32 for index accessors)
         cgltf_accessor *idxAcc = prim->indices;

@@ -140,6 +140,7 @@ STATE_MENU → STATE_STARTER_SELECT → STATE_WORLD ↔ STATE_BATTLE
 - **战斗技能卡片**：威力和标签（先手/高暴/回复）拼接成单行字符串，避免固定坐标重叠
 - **字体子集**：`GAME_CJK[]` 仅包含 482 个游戏实际使用的 CJK 字符（97% 减少），通过 Perl 脚本从源码提取。新增中文文本需同步更新该数组
 - **GLB 模型加载**：使用 `LoadModelSilent()` 包装 `SetTraceLogLevel(LOG_ERROR)` 抑制 u32→u16 索引转换警告
+- **GLB 量化**：模型使用 `KHR_mesh_quantization`（整数位置 + 节点缩放），`LoadGLBNonIndexed` 已应用节点变换；禁止 meshopt/Draco/KTX2/WebP，gltfpack 必须用 `-vtf` 避免 `KHR_texture_transform`
 - **菜单背景**：`resources/background.png` 通过 `DrawFullscreenBG()` 在菜单/图鉴/初始选择/游戏结束界面全屏显示，叠加暗色遮罩保证文字可读
 - **simhei.ttf 缺少 ↔ (U+2194) 字形**——使用 `/` 替代
 

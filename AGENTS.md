@@ -36,6 +36,8 @@ cmake -G "MinGW Makefiles" .. && mingw32-make
 - **角色模型缩放**: 目标高度 `2.0f / maxDim`，配合 scale 参数约 3.2u 高
 - **模型脚底在 y=0**，调用方传入地面高度作为 `pos.y`
 - **朝向公式**: `θ = atan2f(-dx, dz)`，模型 +Z 面朝世界 `(-sin(θ), cos(θ))`
+- **GLB 量化**: 现有资源使用 `KHR_mesh_quantization`（整数位置 + 节点缩放）；`LoadGLBNonIndexed` 负责应用节点变换
+- **禁止 meshopt/Draco/KTX2/WebP** — raylib 无解码器；gltfpack 必须带 `-vtf`，否则会引入不支持的 `KHR_texture_transform`
 
 ### 战斗系统
 - **moveIds=0 是有效招式**（"撞击"），未学习槽用 `moveIds=-1` 哨兵，空槽判断一律用 `moveIds < 0`
