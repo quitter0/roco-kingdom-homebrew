@@ -1033,8 +1033,8 @@ int DrawShopUI(int shopType, Inventory *inv, const MerchantShop *merchant) {
     DrawRectangle(0, 0, sw, sh, (Color){0, 0, 0, 180});
 
     float scl = sh / 720.0f;
-    int panelW = (int)(500 * scl), panelH = (int)(shopType == 0 ? 400 : 300) * (int)scl / (int)scl;
-    panelH = (int)(panelH * scl);
+    int panelW = (int)(500 * scl);
+    int panelH = (int)((shopType == 0 ? 400.0f : 300.0f) * scl);
     int panelX = (sw - panelW) / 2;
     int panelY = (sh - panelH) / 2;
 

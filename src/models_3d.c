@@ -310,9 +310,10 @@ static void LoadOneGLB(int glbIdx)
     for (int mi = 0; mi < loaded.meshCount; mi++)
         g_petModelsRot[sMY_pId].meshes[mi] = CloneMeshRotatedY(&loaded.meshes[mi], baseAngle + 3.14159265f);
 
-    // Free original loaded meshes (now replaced by pre-rotated coMY_pies)
+    // Free original loaded meshes (now replaced by pre-rotated copies)
     for (int mi = 0; mi < loaded.meshCount; mi++)
         UnloadMesh(loaded.meshes[mi]);
+    RL_FREE(loaded.meshes);
 
     g_petModelLoaded[sMY_pId] = true;
 }
@@ -347,16 +348,15 @@ void UnloadPetModels(void)
     {
         if (g_petModelLoaded[i])
         {
-            for (int mi = 0; mi < g_petModels[i].meshCount; mi++)
-                UnloadMesh(g_petModels[i].meshes[mi]);
-            RL_FREE(g_petModels[i].meshes);
-            g_petModels[i].meshes = NULL;
-
+            // The rotated copy shares materials/meshMaterial/skeleton with the
+            // primary model, so only its cloned meshes are owned separately.
             for (int mi = 0; mi < g_petModelsRot[i].meshCount; mi++)
                 UnloadMesh(g_petModelsRot[i].meshes[mi]);
             RL_FREE(g_petModelsRot[i].meshes);
             g_petModelsRot[i].meshes = NULL;
 
+            // UnloadModel also unloads the primary model's meshes and frees
+            // the shared material/skeleton arrays.
             UnloadModel(g_petModels[i]);
             g_petModelLoaded[i] = false;
         }
@@ -413,6 +413,7 @@ static void LoadOneCharModel(int ct)
 
     for (int mi = 0; mi < loaded.meshCount; mi++)
         UnloadMesh(loaded.meshes[mi]);
+    RL_FREE(loaded.meshes);
 
     g_charModelLoaded[ct] = true;
 }
@@ -430,10 +431,6 @@ void UnloadCharacterModels(void)
     {
         if (g_charModelLoaded[i])
         {
-            for (int mi = 0; mi < g_charModels[i].meshCount; mi++)
-                UnloadMesh(g_charModels[i].meshes[mi]);
-            RL_FREE(g_charModels[i].meshes);
-            g_charModels[i].meshes = NULL;
             UnloadModel(g_charModels[i]);
             g_charModelLoaded[i] = false;
         }

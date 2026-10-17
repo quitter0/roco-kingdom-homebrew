@@ -75,9 +75,10 @@ static void ApplyStatusTick(Pet *p, char *msgBuf, int bufSize) {
         int remain = bufSize - (int)strlen(msgBuf) - 1;
         if (remain > 0) strncat(msgBuf, tmp, remain);
     }
-    if (p->status == STATUS_FREEZE && p->statusTimer > 0) {
-        p->statusTimer--;
-        if (rand() % 100 < 25) {
+    if (p->status == STATUS_FREEZE) {
+        if (p->statusTimer > 0) p->statusTimer--;
+        // Timer expiry guarantees thaw; otherwise 25% chance each turn
+        if (p->statusTimer <= 0 || rand() % 100 < 25) {
             p->status = STATUS_NONE;
             p->statusTimer = 0;
             char tmp[64];

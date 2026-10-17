@@ -111,6 +111,8 @@ int main(void) {
 
     // ---- NPC dialog state ----
     int talkingToNPC = -1;
+    bool trainerBattle = false;
+    int trainerCellX = 0, trainerCellZ = 0;
     bool showDialog = false;
     int dialogPage = 0;
     bool showShop = false;           // nurse shop or merchant shop
@@ -463,6 +465,10 @@ int main(void) {
                 if (sqrtf(wdx * wdx + wdz * wdz) < 2.5f && gameState == STATE_WORLD && !magicSpring.isHealing) {
                     Pet wildPet = CreatePet(wildPets[wp].species, 2 + rand() % 5);
                     InitBattle(&battle, playerTeam, teamSize, activePetIdx, &wildPet);
+                    talkingToNPC = -1;
+                    trainerBattle = false;
+                    showDialog = false;
+                    showShop = false;
                     gameState = STATE_BATTLE;
                     // Remove this pet
                     wildPets[wp] = wildPets[wildPetCount - 1];
@@ -484,6 +490,10 @@ int main(void) {
                 ClearEncounterWarning(&encounter);
                 Pet wildPet = CreatePet(encounter.warningSpecies, encounter.warningLevel);
                 InitBattle(&battle, playerTeam, teamSize, activePetIdx, &wildPet);
+                talkingToNPC = -1;
+                trainerBattle = false;
+                showDialog = false;
+                showShop = false;
                 gameState = STATE_BATTLE;
                 break;
             }
@@ -557,6 +567,7 @@ int main(void) {
                                 Pet trainerPet = CreatePet(npcs[i].petSpeciesId, npcs[i].petLevel);
                                 InitBattle(&battle, playerTeam, teamSize, activePetIdx, &trainerPet);
                                 talkingToNPC = i;
+                                trainerBattle = false;
                                 gameState = STATE_BATTLE;
                             } else {
                                 talkingToNPC = i;
@@ -595,9 +606,13 @@ int main(void) {
                                 if (sqrtf(pdx * pdx + pdz * pdz) < 6.0f) {
                                     Pet trainerPet = CreatePet(speciesId, level);
                                     InitBattle(&battle, playerTeam, teamSize, activePetIdx, &trainerPet);
-                                    talkingToNPC = -1 - (cellX * 10000 + cellZ);  // encode cell in negative
+                                    talkingToNPC = -1;
+                                    trainerBattle = true;
+                                    trainerCellX = cellX;
+                                    trainerCellZ = cellZ;
                                     gameState = STATE_BATTLE;
                                     showDialog = false;
+                                    showShop = false;
                                     break;
                                 }
                             }
@@ -1334,15 +1349,14 @@ int main(void) {
                             int nc2 = GetNPCCount();
                             if (talkingToNPC < nc2 && npcs[talkingToNPC].isTrainer)
                                 npcs[talkingToNPC].defeated = true;
-                        } else if (talkingToNPC < -1) {
-                            int encoded = -talkingToNPC - 1;
-                            MarkTrainerDefeated(GetTrainerHash(encoded / 10000, encoded % 10000));
+                        } else if (trainerBattle) {
+                            MarkTrainerDefeated(GetTrainerHash(trainerCellX, trainerCellZ));
                         }
                         // Quest progress: defeat trainers (only for trainer battles)
                         {
                             NPC *npcsForCheck = GetNPCs();
                             bool isTrainerBattle = (talkingToNPC >= 0 && talkingToNPC < GetNPCCount() && npcsForCheck[talkingToNPC].isTrainer)
-                                                   || talkingToNPC < -1;
+                                                   || trainerBattle;
                             if (isTrainerBattle) {
                                 NPC *qnpcs2 = GetNPCs();
                                 for (int qi = 0; qi < GetNPCCount(); qi++) {
@@ -1362,14 +1376,18 @@ int main(void) {
                             }
                         }
                         talkingToNPC = -1;
+                        trainerBattle = false;
                         AutoSave(SAVE_PATH, &player, playerTeam, teamSize,
                                  activePetIdx, &inventory, playTime);
                         gameState = STATE_WORLD;
                     } else if (battle.playerRan) {
                         talkingToNPC = -1;
+                        trainerBattle = false;
                         gameState = STATE_WORLD;
                     } else {
                         // True game over — delete save so Continue is unavailable
+                        talkingToNPC = -1;
+                        trainerBattle = false;
                         remove(SAVE_PATH);
                         gameState = STATE_GAME_OVER;
                     }
