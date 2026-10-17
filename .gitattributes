@@ -1,0 +1,27 @@
+# Normalize line endings for text files
+* text=auto eol=lf
+
+*.c    text eol=lf
+*.h    text eol=lf
+*.md   text eol=lf
+*.txt  text eol=lf
+*.cmake text eol=lf
+CMakeLists.txt text eol=lf
+
+# Windows resource / shell scripts
+*.rc   text eol=crlf
+*.ps1  text eol=crlf
+*.bat  text eol=crlf
+
+# Binary assets
+*.glb   binary
+*.gltf  binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.ico   binary
+*.mp3   binary
+*.wav   binary
+*.ttf   binary
+*.otf   binary
+*.dat   binary
